@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# psplash        Starts psplash.
+#
+
+# Make sure the psplash progam exists
+[ -f /usr/bin/psplash ] || exit 0
+
+start() {
+	echo "PROGRESS 100" > /tmp/psplash_fifo
+	echo "MSG Ready" > /tmp/psplash_fifo
+	echo "QUIT" > /tmp/psplash_fifo
+}
+stop() {
+	psplash &
+	sleep 1
+	echo "PROGRESS 99" > /tmp/psplash_fifo
+	echo "MSG Shutdown" > /tmp/psplash_fifo
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+
