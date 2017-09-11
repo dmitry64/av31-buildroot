@@ -1,0 +1,3 @@
+fatload ${bdev} ${binst}:${bpart} 0x90800000 uImage
+setenv bootargs console=tty0 console=ttymxc0,115200 bootdelay=1 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait video=mxcdi0fb:LVDS666,MY-VGA di0_primary ldb vt.default_utf8=0 loglevel=7 
+bootm 0x90800000
