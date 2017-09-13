@@ -1,17 +1,13 @@
 #!/bin/sh
 #
-# avicon        Starts avicon.
+# lcd        Starts lcd.
 #
 
-
 start() {
-	sync
-	echo "Starting Avicon...";
-	echo "PROGRESS 90" > /tmp/psplash_fifo
+	echo -e "\033[9;0]" > /dev/tty0
 }
 stop() {
-	echo "Stopping avicon...";
-	echo "PROGRESS 90" > /tmp/psplash_fifo
+	echo "Stopping screen..."
 }
 restart() {
 	stop

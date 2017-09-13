@@ -12,7 +12,7 @@ start() {
 	echo "Interface configured..."
 	ifconfig wlan0 up
 	echo "Wlan is up!"
-	echo "PROGRESS 60" > /tmp/psplash_fifo
+	echo "PROGRESS 30" > /tmp/psplash_fifo
 	echo "MSG WiFi" > /tmp/psplash_fifo
 }
 stop() {

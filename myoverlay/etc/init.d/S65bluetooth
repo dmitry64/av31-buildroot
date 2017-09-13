@@ -5,10 +5,15 @@
 
 
 start() {
+	echo "Resetting bluetooth"
+	echo 0 > /proc/gpio/bt-en
+	echo 1 > /proc/gpio/bt-en
+	sleep 1
+	sync
 	echo "Loading firmware..."
 	hciattach -s 115200 /dev/ttymxc2 texas
 	echo "Bluetooth firmware loaded..."
-	echo "PROGRESS 65" > /tmp/psplash_fifo
+	echo "PROGRESS 40" > /tmp/psplash_fifo
 	echo "MSG Bluetooth" > /tmp/psplash_fifo
 }
 stop() {

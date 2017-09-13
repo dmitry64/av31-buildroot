@@ -7,8 +7,10 @@
 [ -f /usr/bin/psplash ] || exit 0
 
 start() {
+	sync
 	echo "PROGRESS 100" > /tmp/psplash_fifo
 	echo "MSG Ready" > /tmp/psplash_fifo
+	sleep 1
 	echo "QUIT" > /tmp/psplash_fifo
 }
 stop() {

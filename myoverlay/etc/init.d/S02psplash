@@ -3,17 +3,19 @@
 # psplash        Starts psplash.
 #
 
-# Make sure the psplash progam exists
-[ -f /usr/bin/psplash ] || exit 0
-
 start() {
+	sync
 	rm -rf /tmp/psplash_fifo
+	echo "Starting psplash..."
 	psplash &
-	echo "PROGRESS 10" > /tmp/psplash_fifo
+	sleep 1
+	echo "PROGRESS 5" > /tmp/psplash_fifo
 	echo "MSG Starting" > /tmp/psplash_fifo
 }
 stop() {
+	echo "Stopping psplash..."
 	echo "MSG Shutdown" > /tmp/psplash_fifo
+	sleep 1
 }
 restart() {
 	stop
