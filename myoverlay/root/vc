@@ -1,0 +1,4 @@
+#! /bin/sh
+#
+
+gst-launch -v mfw_v4lsrc capture-width=720 capture-height=576 ! mfw_v4lsink disp-width=720 disp-height=576

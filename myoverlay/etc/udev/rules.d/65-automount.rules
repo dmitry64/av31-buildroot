@@ -1,0 +1,8 @@
+# /dev/sd* rules
+ACTION=="add", KERNEL=="sd[a-z]*", RUN+="/bin/mkdir -p /mnt/%k"
+ACTION=="add", KERNEL=="sd[a-z]*", PROGRAM=="/lib/udev/vol_id --skip-raid -t %N", RESULT=="vfat", RUN+="/bin/mount -t vfat -o rw,noauto,flush,quiet,nodev,nosuid,noexec,noatime,dmask=000,fmask=111 /dev/%k /mnt/%k", OPTIONS="last_rule"
+ACTION=="add", KERNEL=="sd[a-z]*", RESULT!="", RUN+="/bin/mount -t $RESULT -o rw,noauto,sync,noexec,nodev,noatime /dev/%k /mnt/%k", OPTIONS="last_rule"
+ACTION=="remove", KERNEL=="sd[a-z]*", RUN+="/bin/umount -l /mnt/%k"
+ACTION=="remove", KERNEL=="sd[a-z]*", RUN+="/bin/rmdir /mnt/%k", OPTIONS="last_rule"
+
+
