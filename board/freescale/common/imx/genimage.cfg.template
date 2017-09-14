@@ -10,7 +10,7 @@
 image boot.vfat {
   vfat {
     files = {
-      %FILES%
+      %FILES%, bscript.img
     }
   }
   size = 16M
@@ -35,6 +35,6 @@ image sdcard.img {
 
   partition rootfs {
     partition-type = 0x83
-    image = "rootfs.ext2"
+    image = "rootfs.ext4"
   }
 }

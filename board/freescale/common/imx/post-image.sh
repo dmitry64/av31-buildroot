@@ -30,7 +30,10 @@ linux_image()
 
 main()
 {
+	cp uboot/bscript.img ./output/images
+	
 	local FILES="$(dtb_list) $(linux_image)"
+	echo "${FILES}"
 	local GENIMAGE_CFG="$(mktemp --suffix genimage.cfg)"
 	local GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 
