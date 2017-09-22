@@ -1,0 +1,191 @@
+#!/bin/sh
+export MAIL=/var/mail/root
+export USER=root
+export HOME=/root
+export LOGNAME=root
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+export SHELL=/bin/sh
+export TMPDIR=/tmp
+
+cd $HOME
+
+runFile=/etc/run
+if [ -e ${runFile} ] ; then
+    content=`cat ${runFile}`
+    sleep 1
+    sync
+    rm ${runFile}
+    case $content in
+        "service")
+    	    echo "service" > /etc/run
+    	    sleep 1
+    	    sync
+            /usr/local/avicon-31/test_avicon/test_avicon.sh
+            while true ; do
+               sleep 1
+            done
+            ;;
+        "eltest")
+    	    echo "eltest" > /etc/run
+    	    sleep 1
+    	    sync
+            
+            retval=0
+            sync
+            
+            while true ; do
+				
+                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+					
+				retval=$?
+				sync
+				sleep 1
+					
+				if [ $retval -ne 0 ] ; then
+                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+				
+				retval=$?
+				sync
+				sleep 1
+				
+				fi
+					
+
+				if [ -e ${runFile} ] ; then
+					content=`cat ${runFile}`
+					case $content in
+						"poweroff")
+							rm ${runFile}
+							poweroff
+							while true ; do
+								sleep 1
+							done
+							;;
+						"reboot")
+							rm ${runFile}
+							reboot
+							while true ; do
+								sleep 1
+							done
+							;;
+						"service")
+							reboot
+							while true ; do
+								sleep 1
+							done
+							;;						
+						"update")
+							reboot
+							while true ; do
+								sleep 1
+							done
+							;;
+						"run")
+							rm ${runFile}
+							sleep 1
+							;;
+						*)
+							;;
+					esac
+				fi
+			done
+          
+            ;;
+        "update")
+			export TSLIB_TSDEVICE=/dev/input/event1
+			export TSLIB_CALIBFILE=/etc/pointercal
+            export TSLIB_CONFILE=/etc/ts.conf
+			export TSLIB_PLUGINDIR=/usr/lib/ts
+			export TSLIB_FBDEVICE=/dev/fb0
+			export TSLIB_CONSOLEDEVICE=none
+            /usr/local/avicon-31/updater/updater -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+            ;;
+        "run")
+			echo "update" > /etc/run
+            sleep 1
+            sync
+            reboot
+            while true ; do
+				sleep 1
+			done		
+            ;;
+        *)
+            ;;
+    esac
+
+    reboot
+else
+    rm /root/.config/Radioavionica/avicon-31.conf.*
+    export TSLIB_TSDEVICE=/dev/input/event1
+    export TSLIB_CALIBFILE=/etc/pointercal
+    export TSLIB_CONFILE=/etc/ts.conf
+    export TSLIB_PLUGINDIR=/usr/lib/ts
+    export TSLIB_FBDEVICE=/dev/fb0
+    export TSLIB_CONSOLEDEVICE=none
+    export QT_GSTREAMER_VIDEOSINK=fbdevsink
+    while true ; do
+        echo "run" > /etc/run
+        if [ -e /usr/local/avicon-31/avicon31 ] ; then
+            /usr/local/avicon-31/avicon31 -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+            
+            retval=$?
+            
+            if [ $retval -ne 0 ] ; then
+                /usr/local/avicon-31/errorMessage/errorPopup $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+               echo "update" > /etc/run
+               reboot
+               while true ; do
+                   sleep 1
+               done
+               break
+            fi
+        else
+            echo "update" > /etc/run
+        fi
+
+        if [ -e ${runFile} ] ; then
+            content=`cat ${runFile}`
+            case $content in
+                "poweroff")
+                    rm ${runFile}
+                    poweroff
+                    while true ; do
+                        sleep 1
+                    done
+                    ;;
+                "reboot")
+                    rm ${runFile}
+                    reboot
+                    while true ; do
+                        sleep 1
+                    done
+                    ;;
+                "service")
+                    reboot
+                    while true ; do
+                        sleep 1
+                    done
+                    ;;
+                "eltest")
+                    reboot
+                    while true ; do
+                        sleep 1
+                    done
+                    ;;
+                "update")
+                    reboot
+                    while true ; do
+                        sleep 1
+                    done
+                    ;;
+                "run")
+                    rm ${runFile}
+                    sleep 1
+                    ;;
+                *)
+                    ;;
+            esac
+        fi
+    done
+fi
+sleep 1

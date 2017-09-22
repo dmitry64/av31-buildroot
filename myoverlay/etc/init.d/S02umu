@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# lcd        Starts umu.
+#
+
+start() {
+	echo "Starting umu..."
+	echo 1 > /proc/gpio/gpo-3
+}
+stop() {
+	echo "Stopping umu..."
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

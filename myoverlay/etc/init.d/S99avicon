@@ -5,7 +5,8 @@
 
 
 start() {
-	sync
+	/root/run &
+    sync
 	echo "Starting Avicon...";
 	echo "PROGRESS 90" > /tmp/psplash_fifo
 }
