@@ -5,14 +5,19 @@
 
 
 start() {
+	sync
 	/root/run &
     sync
 	echo "Starting Avicon...";
 	echo "PROGRESS 90" > /tmp/psplash_fifo
+	sync
+	sleep 1
 }
 stop() {
+	sync
 	echo "Stopping avicon...";
 	echo "PROGRESS 90" > /tmp/psplash_fifo
+	sync
 }
 restart() {
 	stop

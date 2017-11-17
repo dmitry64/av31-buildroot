@@ -14,10 +14,12 @@ start() {
 	echo "Wlan is up!"
 	echo "PROGRESS 30" > /tmp/psplash_fifo
 	echo "MSG WiFi" > /tmp/psplash_fifo
+	sync
 }
 stop() {
 	echo "Stopping wifi"
-	echo "PROGRESS 60" > /tmp/psplash_fifo
+	echo "PROGRESS 30" > /tmp/psplash_fifo
+	sync
 }
 restart() {
 	stop

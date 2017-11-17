@@ -6,15 +6,23 @@
 start() {
 	sync
 	rm -rf /tmp/psplash_fifo
+	sync
 	echo "Starting psplash..."
 	psplash &
 	sleep 1
+	sync
 	echo "PROGRESS 5" > /tmp/psplash_fifo
+	sync
 	echo "MSG Starting" > /tmp/psplash_fifo
+	sync
 }
 stop() {
 	echo "Stopping psplash..."
+	sync
+	echo "PROGRESS 5" > /tmp/psplash_fifo
+	sync
 	echo "MSG Shutdown" > /tmp/psplash_fifo
+	sync
 	sleep 1
 }
 restart() {

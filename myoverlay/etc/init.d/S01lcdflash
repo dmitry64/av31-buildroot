@@ -5,9 +5,11 @@
 
 start() {
 	echo -e "\033[9;0]" > /dev/tty0
+	sync
 }
 stop() {
 	echo "Stopping screen..."
+	sync
 }
 restart() {
 	stop

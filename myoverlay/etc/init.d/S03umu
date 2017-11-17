@@ -4,11 +4,21 @@
 #
 
 start() {
+	sync
 	echo "Starting umu..."
 	echo 1 > /proc/gpio/gpo-3
+	sync
+	echo "PROGRESS 20" > /tmp/psplash_fifo
+	sync
+	echo "MSG Starting UMU" > /tmp/psplash_fifo
+	sync
 }
 stop() {
 	echo "Stopping umu..."
+	echo 0 > /proc/gpio/gpo-3
+	sync
+	echo "PROGRESS 20" > /tmp/psplash_fifo
+	sync
 }
 restart() {
 	stop
