@@ -35,14 +35,14 @@ if [ -e ${runFile} ] ; then
             
             while true ; do
 				
-                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
 					
 				retval=$?
 				sync
 				sleep 1
 					
 				if [ $retval -ne 0 ] ; then
-                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
 				
 				retval=$?
 				sync
@@ -129,7 +129,7 @@ else
     while true ; do
         echo "run" > /etc/run
         if [ -e /usr/local/avicon-31/avicon31 ] ; then
-            /usr/local/avicon-31/avicon31 -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+            /usr/local/avicon-31/avicon31 -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/$( date +%y%m%d-%H%M%S ).log 2>&1
             
             retval=$?
             
