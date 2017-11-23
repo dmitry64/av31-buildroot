@@ -11,7 +11,7 @@ start() {
 	echo "PROGRESS 100" > /tmp/psplash_fifo
 	sync
 	echo "MSG Ready" > /tmp/psplash_fifo
-	sleep 1
+	#sleep 1
 	sync
 	echo "QUIT" > /tmp/psplash_fifo
 	sync
