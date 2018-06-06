@@ -1,0 +1,132 @@
+diff -ur --new-file a/src/plugins/platforms/linuxfb/qlinuxfbintegration.cpp b/src/plugins/platforms/linuxfb/qlinuxfbintegration.cpp
+--- a/src/plugins/platforms/linuxfb/qlinuxfbintegration.cpp	2017-01-18 17:20:58.000000000 +0300
++++ b/src/plugins/platforms/linuxfb/qlinuxfbintegration.cpp	2018-06-06 23:03:39.350613000 +0300
+@@ -66,6 +66,9 @@
+ #include <QtInputSupport/private/qtslib_p.h>
+ #endif
+ 
++#include <QtCore/QRegExp>
++#include "qvirtualscreen.h"
++
+ QT_BEGIN_NAMESPACE
+ 
+ QLinuxFbIntegration::QLinuxFbIntegration(const QStringList &paramList)
+@@ -73,6 +76,7 @@
+       m_services(new QGenericUnixServices)
+ {
+     m_primaryScreen = new QLinuxFbScreen(paramList);
++    initializeVirtualScreens(paramList);
+ }
+ 
+ QLinuxFbIntegration::~QLinuxFbIntegration()
+@@ -87,14 +91,15 @@
+     else
+         qWarning("linuxfb: Failed to initialize screen");
+ 
++    for(QSharedPointer<QVirtualScreen> virtualScreen : m_virtualScreens) {
++        screenAdded(virtualScreen.data());
++    }
++	
+     m_inputContext = QPlatformInputContextFactory::create();
+ 
+     m_nativeInterface.reset(new QPlatformNativeInterface);
+ 
+     m_vtHandler.reset(new QFbVtHandler);
+-
+-    if (!qEnvironmentVariableIntValue("QT_QPA_FB_DISABLE_INPUT"))
+-        createInputHandlers();
+ }
+ 
+ bool QLinuxFbIntegration::hasCapability(QPlatformIntegration::Capability cap) const
+@@ -167,4 +172,23 @@
+     return m_nativeInterface.data();
+ }
+ 
++
++void QLinuxFbIntegration::initializeVirtualScreens(const QStringList &args)
++{
++    QRegExp virtualScreenRx(QLatin1String("virtual=(-?\\d+)x(-?\\d+)x(\\d+)x(\\d+)"));
++    for(const QString &arg : args) {
++        if (virtualScreenRx.indexIn(arg) != -1) {
++            QVirtualScreen *virtualScreen = new QVirtualScreen(
++                QRect(
++                    virtualScreenRx.cap(1).toInt(),
++                    virtualScreenRx.cap(2).toInt(),
++                    virtualScreenRx.cap(3).toInt(),
++                    virtualScreenRx.cap(4).toInt())
++            );
++            m_virtualScreens.append(QSharedPointer<QVirtualScreen>(virtualScreen));
++        }
++    }
++}
++
++
+ QT_END_NAMESPACE
+diff -ur --new-file a/src/plugins/platforms/linuxfb/qlinuxfbintegration.h b/src/plugins/platforms/linuxfb/qlinuxfbintegration.h
+--- a/src/plugins/platforms/linuxfb/qlinuxfbintegration.h	2017-01-18 17:20:58.000000000 +0300
++++ b/src/plugins/platforms/linuxfb/qlinuxfbintegration.h	2018-06-06 23:06:07.589536000 +0300
+@@ -48,6 +48,7 @@
+ class QAbstractEventDispatcher;
+ class QLinuxFbScreen;
+ class QFbVtHandler;
++class QVirtualScreen;
+ 
+ class QLinuxFbIntegration : public QPlatformIntegration, public QPlatformNativeInterface
+ {
+@@ -80,6 +81,8 @@
+     QScopedPointer<QPlatformServices> m_services;
+     QScopedPointer<QFbVtHandler> m_vtHandler;
+     QScopedPointer<QPlatformNativeInterface> m_nativeInterface;
++    QList<QSharedPointer<QVirtualScreen> > m_virtualScreens;
++    void initializeVirtualScreens(const QStringList &args);
+ };
+ 
+ QT_END_NAMESPACE
+diff -ur --new-file a/src/plugins/platforms/linuxfb/qlinuxfbscreen.cpp b/src/plugins/platforms/linuxfb/qlinuxfbscreen.cpp
+--- a/src/plugins/platforms/linuxfb/qlinuxfbscreen.cpp	2017-01-18 17:20:58.000000000 +0300
++++ b/src/plugins/platforms/linuxfb/qlinuxfbscreen.cpp	2017-09-12 11:22:58.678007000 +0300
+@@ -144,7 +144,7 @@
+             mmWidth = vinfo.width;
+             mmHeight = vinfo.height;
+         } else {
+-            const int dpi = 100;
++            const int dpi = 75;
+             mmWidth = qRound(res.width() * 25.4 / dpi);
+             mmHeight = qRound(res.height() * 25.4 / dpi);
+         }
+diff -ur --new-file a/src/plugins/platforms/linuxfb/qvirtualscreen.h b/src/plugins/platforms/linuxfb/qvirtualscreen.h
+--- a/src/plugins/platforms/linuxfb/qvirtualscreen.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/platforms/linuxfb/qvirtualscreen.h	2017-06-05 12:12:09.003916000 +0300
+@@ -0,0 +1,32 @@
++#ifndef QPLATFORMINTEGRATION_VIRTUALSCREEN_H
++#define QPLATFORMINTEGRATION_VIRTUALSCREEN_H
++
++#include <qpa/qplatformintegration.h>
++#include <qpa/qplatformscreen.h>
++
++QT_BEGIN_NAMESPACE
++
++class QVirtualScreen : public QPlatformScreen
++{
++public:
++    QVirtualScreen(const QRect &geometry)
++        : mGeometry(geometry)
++        , mDepth(32)
++        , mFormat(QImage::Format_ARGB32_Premultiplied)
++        , mPhysicalSize(geometry.size())
++    {}
++
++    QRect geometry() const { return mGeometry; }
++    int depth() const { return mDepth; }
++    QImage::Format format() const { return mFormat; }
++
++public:
++    QRect mGeometry;
++    int mDepth;
++    QImage::Format mFormat;
++    QSize mPhysicalSize;
++};
++
++QT_END_NAMESPACE
++
++#endif // QPLATFORMINTEGRATION_VIRTUALSCREEN_H
