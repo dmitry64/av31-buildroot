@@ -1,0 +1,466 @@
+diff -ur --new-file a/src/plugins/sensors/sensors.pro b/src/plugins/sensors/sensors.pro
+--- a/src/plugins/sensors/sensors.pro	2016-12-10 11:21:59.000000000 +0300
++++ b/src/plugins/sensors/sensors.pro	2017-09-13 15:38:28.706337000 +0300
+@@ -25,6 +25,8 @@
+     isEmpty(SENSORS_PLUGINS): SENSORS_PLUGINS = linux iio-sensor-proxy generic
+ }
+ 
++SENSORS_PLUGINS += utsvu
++
+ contains(SENSORS_PLUGINS, dummy):SUBDIRS += dummy
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, generic):SUBDIRS += generic
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, simulator):qtHaveModule(simulator):SUBDIRS += simulator
+@@ -32,5 +34,8 @@
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, iio-sensor-proxy):linux:qtHaveModule(dbus):SUBDIRS += iio-sensor-proxy
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, android):android:SUBDIRS += android
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, sensorfw):sensorfw:SUBDIRS += sensorfw
++isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, utsvu):utsvu:SUBDIRS += utsvu
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, ios):darwin:SUBDIRS += ios
+ isEmpty(SENSORS_PLUGINS)|contains(SENSORS_PLUGINS, winrt):winrt:SUBDIRS += winrt
++
++SUBDIRS += utsvu
+diff -ur --new-file a/src/plugins/sensors/utsvu/debug.h b/src/plugins/sensors/utsvu/debug.h
+--- a/src/plugins/sensors/utsvu/debug.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/debug.h	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,16 @@
++#ifndef DEBUG_H
++#define DEBUG_H
++
++#if defined(QT_NO_DEBUG)
++    #define QDEBUG    if(1); else qDebug()
++    #define QWARNING  qWarning()
++    #define QCRITICAL qCritical()
++    #define QFATAL    qFatal()
++#else
++    #define QDEBUG    qDebug()    << Q_FUNC_INFO << '(' << __LINE__ << "):"
++    #define QWARNING  qWarning()  << Q_FUNC_INFO << '(' << __LINE__ << ") warning:"
++    #define QCRITICAL qCritical() << Q_FUNC_INFO << '(' << __LINE__ << ") error:"
++    #define QFATAL    qFatal()    << Q_FUNC_INFO << '(' << __LINE__ << ") fatal error:"
++#endif
++
++#endif // DEBUG_H
+diff -ur --new-file a/src/plugins/sensors/utsvu/ds18s20.cpp b/src/plugins/sensors/utsvu/ds18s20.cpp
+--- a/src/plugins/sensors/utsvu/ds18s20.cpp	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/ds18s20.cpp	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,99 @@
++#include <QDir>
++#include <QDebug>
++
++#include "ds18s20.h"
++#include "debug.h"
++
++#define ONEWIRE_DEVICES_DIR  "/sys/bus/w1/devices/"
++#define DS18S20_FAMILY_CODE  "10-"
++#define ONEWIRE_DEVICES_NAME "/w1_slave"
++
++Ds18s20::Ds18s20()
++    : _isInited(false)
++{
++}
++
++Ds18s20::~Ds18s20()
++{
++    finit();
++}
++
++bool Ds18s20::init(QString &error)
++{
++    QDir w1Dir(QLatin1String(ONEWIRE_DEVICES_DIR));
++    QFileInfoList list = w1Dir.entryInfoList();
++    for (int i = 0; i < list.size(); ++i) {
++        QFileInfo fileInfo = list.at(i);
++        QString fileName = fileInfo.fileName();
++        if (fileName == QLatin1String(".") || fileName == QLatin1String("..")) {
++            continue;
++        }
++        if (fileName.startsWith(QLatin1String(DS18S20_FAMILY_CODE))) {
++            _w1DevFileName = fileInfo.absoluteFilePath() + QLatin1String(ONEWIRE_DEVICES_NAME);
++            _w1DevFile.setFileName(_w1DevFileName);
++            _isInited = true;
++            return true;
++        }
++    }
++
++    error = QLatin1String("device file not found");
++    QWARNING << error;
++    return false;
++}
++
++void Ds18s20::finit()
++{
++    if (_isInited) {
++        _w1DevFile.close();
++        _isInited = false;
++    }
++}
++
++float Ds18s20::temperature(QString &error)
++{
++    if (_isInited == false) {
++        if (init(error) == false) {
++            return 0;
++        }
++    }
++
++    if (_w1DevFile.isOpen()) {
++        _w1DevFile.close();
++    }
++
++    if (_w1DevFile.open(QFile::ReadOnly) == false) {
++        error = QLatin1String("can't open device file name:'") + _w1DevFileName + QLatin1String("' reason:") + _w1DevFile.errorString();
++        QCRITICAL << error;
++        return 0;
++    }
++
++    QByteArray data = _w1DevFile.readAll();
++    if (data.size() < 5) {
++        error = QString(QLatin1String("too little (%1 bytes) data readed from file %2")).arg(data.size()).arg(_w1DevFileName);
++        QWARNING << error;
++        return 0;
++    }
++
++    if (data.indexOf("YES") == -1) {
++        error = QLatin1String("CRC YES not found, or bad CRC");
++        QWARNING << error;
++        return 0;
++    }
++
++    int index = -1;
++    if ((index = data.indexOf("t=")) == -1) {
++        error = QLatin1String("temperature value not found");
++        QWARNING << error;
++        return 0;
++    }
++    index += 2;
++    bool ok = false;
++    float t = data.mid(index).simplified().toFloat(&ok)/1000;
++    if (ok == false) {
++        error = QLatin1String("a conversion error occurs");
++        QWARNING << error;
++        return 0;
++    }
++
++    return t;
++}
+diff -ur --new-file a/src/plugins/sensors/utsvu/ds18s20.h b/src/plugins/sensors/utsvu/ds18s20.h
+--- a/src/plugins/sensors/utsvu/ds18s20.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/ds18s20.h	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,23 @@
++#ifndef DS18S20_H
++#define DS18S20_H
++
++#include <QFile>
++#include <QString>
++
++class Ds18s20
++{
++public:
++    Ds18s20();
++    ~Ds18s20();
++
++    bool init(QString &error);
++    void finit();
++    float temperature(QString &error);
++
++private:
++    QFile _w1DevFile;
++    QString _w1DevFileName;
++    bool _isInited;
++};
++
++#endif // DS18S20_H
+diff -ur --new-file a/src/plugins/sensors/utsvu/main.cpp b/src/plugins/sensors/utsvu/main.cpp
+--- a/src/plugins/sensors/utsvu/main.cpp	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/main.cpp	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,37 @@
++#include "utsvusensorbackend.h"
++#include "utsvutemperaturesensor.h"
++
++#include <qsensormanager.h>
++#include <qsensorbackend.h>
++#include <qsensorplugin.h>
++
++#include <QDebug>
++
++#include "debug.h"
++
++static const char *utsvuTemperatureSensorId = "utsvuTemperatureSensor";
++
++class UtsvuSensorPlugin : public QObject, public QSensorPluginInterface, public QSensorBackendFactory
++{
++    Q_OBJECT
++    Q_PLUGIN_METADATA(IID "com.qt-project.Qt.QSensorPluginInterface/1.0" FILE "plugin.json")
++    Q_INTERFACES(QSensorPluginInterface)
++
++public:
++    void registerSensors()
++    {
++        QDEBUG << "loaded the UTSVU sensors plugin";
++        QSensorManager::registerBackend(QAmbientTemperatureSensor::type, utsvuTemperatureSensorId, this);
++    }
++
++    QSensorBackend *createBackend(QSensor *sensor)
++    {
++        qDebug() << Q_FUNC_INFO;
++        UtsvuSensorBackendBase *backend = 0;
++        if (sensor->identifier() == utsvuTemperatureSensorId)
++            backend = new UtsvuTemperatureSensor(sensor);
++        return backend;
++    }
++};
++
++#include "main.moc"
+diff -ur --new-file a/src/plugins/sensors/utsvu/plugin.json b/src/plugins/sensors/utsvu/plugin.json
+--- a/src/plugins/sensors/utsvu/plugin.json	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/plugin.json	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1 @@
++{ "Keys": [ "utsvu" ] }
+diff -ur --new-file a/src/plugins/sensors/utsvu/readme.md b/src/plugins/sensors/utsvu/readme.md
+--- a/src/plugins/sensors/utsvu/readme.md	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/readme.md	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,2 @@
++just copy this folder to ${qt-dir}/qtsensors/src/plugins/sensors
++and run sudo ./spoof.sh
+\ No newline at end of file
+diff -ur --new-file a/src/plugins/sensors/utsvu/spoof.sh b/src/plugins/sensors/utsvu/spoof.sh
+--- a/src/plugins/sensors/utsvu/spoof.sh	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/spoof.sh	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,11 @@
++#!/bin/sh
++
++export DEV_IMAGE=/opt/ltib/rootfs
++export TOOLCHAIN_PREFIX=arm-none-linux-gnueabi-
++export TOOLCHAIN_PATH=/usr/local/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_GNU_Linux
++export PATH=/usr/local/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_GNU_Linux/bin:/opt/freescale/ltib/usr/spoof:$PATH
++export QT_VERSION=5.4.0
++
++/opt/ltib/rpm/BUILD/qt-everywhere-opensource-src-${QT_VERSION}/qtbase/bin/qmake /opt/ltib/rpm/BUILD/qt-everywhere-opensource-src-${QT_VERSION}/qtsensors/src/plugins/sensors/utsvu/utsvu.pro -o Makefile && make -f Makefile && \
++make && \
++make install
+diff -ur --new-file a/src/plugins/sensors/utsvu/utsvu.pro b/src/plugins/sensors/utsvu/utsvu.pro
+--- a/src/plugins/sensors/utsvu/utsvu.pro	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/utsvu.pro	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,23 @@
++TEMPLATE = lib
++CONFIG += plugin
++TARGET = $$qtLibraryTarget(qtsensors_utsvu)
++PLUGIN_TYPE = sensors
++
++QT = sensors core
++
++DEFINES += QT_NO_CAST_FROM_ASCII QT_NO_CAST_TO_ASCII
++DEFINES += QT_NO_DEBUG
++
++load(qt_plugin)
++
++HEADERS += utsvusensorbackend.h \
++    utsvutemperaturesensor.h \
++    ds18s20.h \
++    debug.h
++
++SOURCES += utsvusensorbackend.cpp \
++    utsvutemperaturesensor.cpp \
++    ds18s20.cpp \
++    main.cpp
++
++OTHER_FILES = plugin.json
+diff -ur --new-file a/src/plugins/sensors/utsvu/utsvusensorbackend.cpp b/src/plugins/sensors/utsvu/utsvusensorbackend.cpp
+--- a/src/plugins/sensors/utsvu/utsvusensorbackend.cpp	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/utsvusensorbackend.cpp	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,19 @@
++#include "utsvusensorbackend.h"
++
++#include <QtCore/QDebug>
++
++UtsvuSensorBackendBase::UtsvuSensorBackendBase(QSensor *sensor)
++    : QSensorBackend(sensor)
++{
++}
++
++
++void UtsvuSensorBackendBase::start()
++{
++    _started = true;
++}
++
++void UtsvuSensorBackendBase::stop()
++{
++    _started = false;
++}
+diff -ur --new-file a/src/plugins/sensors/utsvu/utsvusensorbackend.h b/src/plugins/sensors/utsvu/utsvusensorbackend.h
+--- a/src/plugins/sensors/utsvu/utsvusensorbackend.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/utsvusensorbackend.h	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,34 @@
++#ifndef UTSVUSENSORBACKEND_H
++#define UTSVUSENSORBACKEND_H
++
++#include <qsensorbackend.h>
++
++class UtsvuSensorBackendBase : public QSensorBackend
++{
++    Q_OBJECT
++
++public:
++    UtsvuSensorBackendBase(QSensor *sensor);
++
++    void start() Q_DECL_OVERRIDE;
++    void stop() Q_DECL_OVERRIDE;
++
++protected:
++    bool _started;
++};
++
++template<class SensorReading>
++class UtsvuSensorBackend : public UtsvuSensorBackendBase
++{
++public:
++    UtsvuSensorBackend(QSensor *sensor)
++        : UtsvuSensorBackendBase(sensor)
++    {
++        setReading(&_reading);
++    }
++
++protected:
++    SensorReading _reading;
++};
++
++#endif // UTSVUSENSORBACKEND_H
+diff -ur --new-file a/src/plugins/sensors/utsvu/utsvutemperaturesensor.cpp b/src/plugins/sensors/utsvu/utsvutemperaturesensor.cpp
+--- a/src/plugins/sensors/utsvu/utsvutemperaturesensor.cpp	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/utsvutemperaturesensor.cpp	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,81 @@
++#include <QDebug>
++
++#include "debug.h"
++#include "utsvutemperaturesensor.h"
++
++void Worker::doInit()
++{
++    QString error;
++    bool isInited = temperatureSensor.init(error);
++    emit initResult(isInited, error);
++}
++
++void Worker::doWork()
++{
++    QString error;
++    float rez = temperatureSensor.temperature(error);
++    emit resultReady(rez, error);
++}
++
++UtsvuTemperatureSensor::UtsvuTemperatureSensor(QSensor *sensor)
++    : UtsvuSensorBackend<QAmbientTemperatureReading>(sensor)
++{
++    setDescription(QLatin1String("Temperature in degrees Celsius"));
++}
++
++UtsvuTemperatureSensor::~UtsvuTemperatureSensor()
++{
++    addOutputRange(-55.0, 125.0, 0.5);
++}
++
++void UtsvuTemperatureSensor::start()
++{
++    if (_started) {
++        stop();
++    }
++
++    Worker *worker = new Worker;
++    worker->moveToThread(&_workerThread);
++
++    connect(&_workerThread, &QThread::finished, worker, &QObject::deleteLater);
++    connect(&_workerThread, &QThread::started, worker, &Worker::doInit);
++    connect(worker, &Worker::initResult, this, &UtsvuTemperatureSensor::initResult);
++    connect(this, &UtsvuTemperatureSensor::operate, worker, &Worker::doWork);
++    connect(worker, &Worker::resultReady, this, &UtsvuTemperatureSensor::handleResults);
++    _workerThread.start();
++}
++
++void UtsvuTemperatureSensor::stop()
++{
++    _timer.stop();
++    _workerThread.quit();
++    _workerThread.wait();
++
++    UtsvuSensorBackendBase::stop();
++}
++
++void UtsvuTemperatureSensor::initResult(bool isInited, const QString &error)
++{
++    if (isInited == true) {
++        _timer.setInterval(1000);
++        connect(&_timer, SIGNAL(timeout()), this, SIGNAL(operate()));
++        _timer.start();
++
++        UtsvuSensorBackendBase::start();
++    }
++    else {
++        QWARNING << error;
++    }
++}
++
++void UtsvuTemperatureSensor::handleResults(qreal temperature, const QString &error)
++{
++    if (error.isEmpty()) {
++        QDEBUG << "temperature:" << temperature;
++        _reading.setTemperature(temperature);
++        newReadingAvailable();
++    }
++    else {
++        QWARNING << error;
++    }
++}
+diff -ur --new-file a/src/plugins/sensors/utsvu/utsvutemperaturesensor.h b/src/plugins/sensors/utsvu/utsvutemperaturesensor.h
+--- a/src/plugins/sensors/utsvu/utsvutemperaturesensor.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/plugins/sensors/utsvu/utsvutemperaturesensor.h	2016-04-19 10:20:05.987962000 +0300
+@@ -0,0 +1,50 @@
++#ifndef UTSVUTEMPERATURESENSOR_H
++#define UTSVUTEMPERATURESENSOR_H
++
++#include <QTimer>
++#include <QThread>
++#include <qambienttemperaturesensor.h>
++
++#include "utsvusensorbackend.h"
++#include "ds18s20.h"
++
++class Worker : public QObject
++{
++    Q_OBJECT
++
++public slots:
++    void doInit();
++    void doWork();
++
++signals:
++    void initResult(bool isInited, const QString &error);
++    void resultReady(qreal temperature, const QString &error);
++
++private:
++    Ds18s20 temperatureSensor;
++};
++
++class UtsvuTemperatureSensor : public UtsvuSensorBackend<QAmbientTemperatureReading>
++{
++    Q_OBJECT
++
++public:
++    explicit UtsvuTemperatureSensor(QSensor *sensor);
++    ~UtsvuTemperatureSensor();
++
++    void start();
++    void stop();
++
++public slots:
++    void initResult(bool isInited, const QString &error);
++    void handleResults(qreal temperature, const QString &error);
++
++signals:
++    void operate();
++
++private:
++    QTimer _timer;
++    QThread _workerThread;
++};
++
++#endif // UTSVUTEMPERATURESENSOR_H
