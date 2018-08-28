@@ -7,16 +7,38 @@
 start() {
 	sync
 	/root/run &
-    sync
+    	sync
 	echo "Starting Avicon...";
-	echo "PROGRESS 90" > /tmp/psplash_fifo
+	echo "PROGRESS 45" > /tmp/psplash_fifo
 	sync
-	sleep 1
+	sleep 0.2
+	echo "PROGRESS 50" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 55" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 60" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 65" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 70" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 75" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 80" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 85" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 90" > /tmp/psplash_fifo
+	sleep 0.2
+	echo "PROGRESS 95" > /tmp/psplash_fifo
+	sleep 0.2
+	sync
 }
 stop() {
 	sync
 	echo "Stopping avicon...";
-	echo "PROGRESS 90" > /tmp/psplash_fifo
+	echo "PROGRESS 95" > /tmp/psplash_fifo
+	sleep 0.3
 	sync
 }
 restart() {

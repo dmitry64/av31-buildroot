@@ -9,21 +9,19 @@ start() {
 	sync
 	echo "Starting psplash..."
 	psplash &
-	sleep 1
+	sleep 0.7
 	sync
-	echo "PROGRESS 5" > /tmp/psplash_fifo
+	echo "PROGRESS 1" > /tmp/psplash_fifo
 	sync
-	echo "MSG Starting" > /tmp/psplash_fifo
+	echo "PROGRESS 3" > /tmp/psplash_fifo
 	sync
 }
 stop() {
 	echo "Stopping psplash..."
 	sync
-	echo "PROGRESS 5" > /tmp/psplash_fifo
+	echo "PROGRESS 3" > /tmp/psplash_fifo
+	sleep 0.7
 	sync
-	echo "MSG Shutdown" > /tmp/psplash_fifo
-	sync
-	sleep 1
 }
 restart() {
 	stop

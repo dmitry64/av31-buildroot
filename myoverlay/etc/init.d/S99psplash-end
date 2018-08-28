@@ -10,18 +10,17 @@ start() {
 	sync
 	echo "PROGRESS 100" > /tmp/psplash_fifo
 	sync
-	echo "MSG Ready" > /tmp/psplash_fifo
-	#sleep 1
-	sync
+	sleep 0.1
 	echo "QUIT" > /tmp/psplash_fifo
 	sync
+	sleep 0.1
 }
 stop() {
 	sync
 	rm -rf /tmp/psplash_fifo
 	sync
 	psplash &
-	sleep 1
+	sleep 0.5
 	sync
 	echo "PROGRESS 100" > /tmp/psplash_fifo
 	sync

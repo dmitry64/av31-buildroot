@@ -5,15 +5,17 @@
 
 
 start() {
+	echo "PROGRESS 15" > /tmp/psplash_fifo
 	echo "Starting wlan..."
 	modprobe wl1271_sdio
 	echo "Module loaded..."
+	echo "PROGRESS 20" > /tmp/psplash_fifo
 	ifconfig wlan0 hw ether 02:01:02:03:04:05
 	echo "Interface configured..."
+	echo "PROGRESS 25" > /tmp/psplash_fifo
 	ifconfig wlan0 up
 	echo "Wlan is up!"
 	echo "PROGRESS 30" > /tmp/psplash_fifo
-	echo "MSG WiFi" > /tmp/psplash_fifo
 	sync
 }
 stop() {

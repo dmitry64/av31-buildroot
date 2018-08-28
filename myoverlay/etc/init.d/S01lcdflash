@@ -4,7 +4,11 @@
 #
 
 start() {
+	echo 3 > /proc/sys/vm/drop_caches
+	sleep 0.3
+	sync
 	echo -e "\033[9;0]" > /dev/tty0
+	sleep 0.3
 	sync
 }
 stop() {
