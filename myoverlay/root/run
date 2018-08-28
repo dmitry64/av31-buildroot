@@ -12,17 +12,17 @@ cd $HOME
 runFile=/etc/run
 if [ -e ${runFile} ] ; then
     content=`cat ${runFile}`
-    sleep 1
+    sleep 0.3
     sync
     rm ${runFile}
     case $content in
         "service")
     	    echo "service" > /etc/run
-    	    sleep 1
+    	    sleep 0.3
     	    sync
             /usr/local/avicon-31/test_avicon/test_avicon.sh
             while true ; do
-               sleep 1
+               sleep 2
             done
             ;;
         "eltest")
@@ -35,14 +35,14 @@ if [ -e ${runFile} ] ; then
             
             while true ; do
 				
-                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
+                		/usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
 					
 				retval=$?
 				sync
 				sleep 1
 					
 				if [ $retval -ne 0 ] ; then
-                /usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
+                			/usr/local/avicon-31/avicon31 -eltest -ec $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/eltest_$( date +%y%m%d-%H%M%S ).log 2>&1
 				
 				retval=$?
 				sync
@@ -94,11 +94,11 @@ if [ -e ${runFile} ] ; then
         "update")
 			export TSLIB_TSDEVICE=/dev/input/event1
 			export TSLIB_CALIBFILE=/etc/pointercal
-            export TSLIB_CONFILE=/etc/ts.conf
+            		export TSLIB_CONFILE=/etc/ts.conf
 			export TSLIB_PLUGINDIR=/usr/lib/ts
 			export TSLIB_FBDEVICE=/dev/fb0
 			export TSLIB_CONSOLEDEVICE=none
-            /usr/local/avicon-31/updater/updater -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
+            		/usr/local/avicon-31/updater/updater -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
 			while true ; do
                             sleep 1
                         done
@@ -109,7 +109,7 @@ if [ -e ${runFile} ] ; then
             sync
             reboot
             while true ; do
-                sleep 1
+                sleep 10
             done		
             ;;
         *)
@@ -132,13 +132,13 @@ else
             /usr/local/avicon-31/avicon31 -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse >/root/.avicon-31/log/$( date +%y%m%d-%H%M%S ).log 2>&1
             
             retval=$?
-            
+            sync
             if [ $retval -ne 0 ] ; then
                 /usr/local/avicon-31/errorMessage/errorPopup $retval -platform linuxfb:virtual=-100x0x100x480:virtual=640x0x100x480:virtual=-100x480x840x100 -plugin Tslib:/dev/input/event1 -plugin EvdevKeyboard -plugin EvdevMouse
                echo "update" > /etc/run
                reboot
                while true ; do
-                   sleep 1
+                   sleep 10
                done
                break
             fi
@@ -153,14 +153,14 @@ else
                     rm ${runFile}
                     poweroff
                     while true ; do
-                        sleep 1
+                        sleep 10
                     done
                     ;;
                 "reboot")
                     rm ${runFile}
                     reboot
                     while true ; do
-                        sleep 1
+                        sleep 10
                     done
                     ;;
                 "service")
@@ -172,13 +172,13 @@ else
                 "eltest")
                     reboot
                     while true ; do
-                        sleep 1
+                        sleep 10
                     done
                     ;;
                 "update")
                     reboot
                     while true ; do
-                        sleep 1
+                        sleep 10
                     done
                     ;;
                 "run")

@@ -11,27 +11,27 @@ start() {
 	echo "Starting Avicon...";
 	echo "PROGRESS 45" > /tmp/psplash_fifo
 	sync
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 50" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 55" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 60" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 65" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 70" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 75" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 80" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 85" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 90" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	echo "PROGRESS 95" > /tmp/psplash_fifo
-	sleep 0.2
+	sleep 0.1
 	sync
 }
 stop() {
